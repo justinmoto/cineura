@@ -31,26 +31,48 @@ jobs:
         env:
           CI: true
 
+      - name: Issues detected
+        run: |
+          node -e "
+            const d = JSON.parse(require('fs').readFileSync('scan-result.json', 'utf8'));
+            const w = d.warnings || [];
+            const dup = d.duplicates || [];
+            if (w.length) {
+              console.log('--- Warnings ---');
+              w.forEach(x => console.log((x.file || '') + (x.line != null ? ':' + x.line : '') + ' - ' + (x.message || '')));
+            }
+            if (dup.length) {
+              console.log('--- Duplicate groups ---');
+              dup.forEach((g, i) => console.log((i+1) + '. ' + (g.files || []).join(', ')));
+            }
+            if (!w.length && !dup.length) console.log('No issues.');
+          "
+
       - name: Comment on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
-            const score = parseInt(process.env.SCORE || '0', 10);
-            const warnings = parseInt(process.env.WARNINGS || '0', 10);
-            const duplicates = parseInt(process.env.DUPLICATES || '0', 10);
-            const issuesLine = [warnings > 0 && (warnings + ' warning(s)'), duplicates > 0 && (duplicates + ' duplicate group(s)')].filter(Boolean).join(', ') || '0 issues';
-            const body = `## Frontend Guardian\n\n**Score:** ${score}/100 (min 70)\n**Issues:** ${issuesLine}\n${score < 70 ? '❌ Below threshold' : '✅ Passed'}`;
+            const fs = require('fs');
+            const d = JSON.parse(fs.readFileSync('scan-result.json', 'utf8'));
+            const score = d.score || 0;
+            const warnings = d.warnings || [];
+            const duplicates = d.duplicates || [];
+            const issuesLine = [warnings.length > 0 && (warnings.length + ' warning(s)'), duplicates.length > 0 && (duplicates.length + ' duplicate group(s)')].filter(Boolean).join(', ') || '0 issues';
+            let body = '## Frontend Guardian\n\n**Score:** ' + score + '/100 (min 70)\n**Issues:** ' + issuesLine + '\n';
+            if (warnings.length) {
+              body += '\n' + warnings.map(w => '- ' + (w.message || '').replace(/\n/g, ' ')).join('\n') + '\n';
+            }
+            if (duplicates.length) {
+              body += '\nDuplicate groups: ' + duplicates.length + '\n';
+            }
+            body += '\n' + (score < 70 ? '❌ Below threshold' : '✅ Passed');
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body
             });
-        env:
-          SCORE: ${{ steps.scan.outputs.score }}
-          WARNINGS: ${{ steps.scan.outputs.warnings_count }}
-          DUPLICATES: ${{ steps.scan.outputs.duplicates_count }}
 
       - name: Fail if below threshold
         run: |
