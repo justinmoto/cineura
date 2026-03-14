@@ -10,6 +10,9 @@ jobs:
   frontend-guardian:
     name: Frontend Guardian (min score 70)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -23,6 +26,8 @@ jobs:
         run: |
           npx frontend-guardian@latest . --json > scan-result.json
           echo "score=$(node -e "console.log(JSON.parse(require('fs').readFileSync('scan-result.json','utf8')).score)")" >> $GITHUB_OUTPUT
+          echo "warnings_count=$(node -e "const d=JSON.parse(require('fs').readFileSync('scan-result.json','utf8')); console.log(d.warningsCount ?? d.warnings?.length ?? 0)")" >> $GITHUB_OUTPUT
+          echo "duplicates_count=$(node -e "const d=JSON.parse(require('fs').readFileSync('scan-result.json','utf8')); console.log(d.duplicatesCount ?? d.duplicates?.length ?? 0)")" >> $GITHUB_OUTPUT
         env:
           CI: true
 
@@ -32,7 +37,10 @@ jobs:
         with:
           script: |
             const score = parseInt(process.env.SCORE || '0', 10);
-            const body = `## Frontend Guardian\n\n**Score:** ${score}/100 (min 70)\n${score < 70 ? '❌ Below threshold' : '✅ Passed'}`;
+            const warnings = parseInt(process.env.WARNINGS || '0', 10);
+            const duplicates = parseInt(process.env.DUPLICATES || '0', 10);
+            const issuesLine = [warnings > 0 && (warnings + ' warning(s)'), duplicates > 0 && (duplicates + ' duplicate group(s)')].filter(Boolean).join(', ') || '0 issues';
+            const body = `## Frontend Guardian\n\n**Score:** ${score}/100 (min 70)\n**Issues:** ${issuesLine}\n${score < 70 ? '❌ Below threshold' : '✅ Passed'}`;
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -41,6 +49,8 @@ jobs:
             });
         env:
           SCORE: ${{ steps.scan.outputs.score }}
+          WARNINGS: ${{ steps.scan.outputs.warnings_count }}
+          DUPLICATES: ${{ steps.scan.outputs.duplicates_count }}
 
       - name: Fail if below threshold
         run: |
