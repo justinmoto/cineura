@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from '../src/pages/Homepage'
 import Moviepage from '../src/pages/Moviepage'
 import MyListpage from '../src/pages/MyListpage'
+import DummyPage from '../src/pages/DummyPage'
 import { movies } from '../src/pages/Browsepage'
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <Route path='/' element={<Home movies={movies} wishlistCount={wishlist.length} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />} />
         <Route path='/movies/:id' element={<Moviepage wishlistCount={wishlist.length} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />} />
         <Route path='/my-list' element={<MyListpage movies={movies} wishlist={wishlist} wishlistCount={wishlist.length} toggleWishlist={toggleWishlist} />} />
+        <Route path='/dummy' element={<DummyPage />} />
       </Routes>
     </BrowserRouter>
   )
