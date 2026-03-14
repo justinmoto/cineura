@@ -1,0 +1,51 @@
+name: Frontend Guardian
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  frontend-guardian:
+    name: Frontend Guardian (min score 70)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run Frontend Guardian
+        id: scan
+        run: |
+          npx frontend-guardian@latest . --json > scan-result.json
+          echo "score=$(node -e "console.log(JSON.parse(require('fs').readFileSync('scan-result.json','utf8')).score)")" >> $GITHUB_OUTPUT
+        env:
+          CI: true
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const score = parseInt(process.env.SCORE || '0', 10);
+            const body = `## Frontend Guardian\n\n**Score:** ${score}/100 (min 70)\n${score < 70 ? '❌ Below threshold' : '✅ Passed'}`;
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+        env:
+          SCORE: ${{ steps.scan.outputs.score }}
+
+      - name: Fail if below threshold
+        run: |
+          SCORE="${{ steps.scan.outputs.score }}"
+          if [ -z "$SCORE" ] || [ "$SCORE" -lt 70 ]; then
+            echo "Score $SCORE is below required 70. Failing."
+            exit 1
+          fi
