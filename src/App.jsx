@@ -5,6 +5,7 @@ import Home from '../src/pages/Homepage'
 import Moviepage from '../src/pages/Moviepage'
 import MyListpage from '../src/pages/MyListpage'
 import DummyPage from '../src/pages/DummyPage'
+import DummyPage2 from '../src/pages/DummyPage2'
 import { movies } from '../src/pages/Browsepage'
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
         <Route path='/movies/:id' element={<Moviepage wishlistCount={wishlist.length} toggleWishlist={toggleWishlist} isInWishlist={isInWishlist} />} />
         <Route path='/my-list' element={<MyListpage movies={movies} wishlist={wishlist} wishlistCount={wishlist.length} toggleWishlist={toggleWishlist} />} />
         <Route path='/dummy' element={<DummyPage />} />
+        <Route path='/dummy-2' element={<DummyPage2 />} />
       </Routes>
     </BrowserRouter>
   )
