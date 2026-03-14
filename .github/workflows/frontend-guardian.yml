@@ -67,6 +67,7 @@ jobs:
               body += '\nDuplicate groups: ' + duplicates.length + '\n';
             }
             body += '\n' + (score < 70 ? '❌ Below threshold' : '✅ Passed');
+            body += '\n\n---\nRun `npx frontend-guardian .` in your CLI to see which files need enhancement.';
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
