@@ -8,6 +8,7 @@ import DummyPage from '../src/pages/DummyPage'
 import DummyPage2 from '../src/pages/DummyPage2'
 import DummyPage3 from '../src/pages/DummyPage3'
 import DummyPage4 from '../src/pages/DummyPage4'
+import DummyPage5 from '../src/pages/DummyPage5'
 import { movies } from '../src/pages/Browsepage'
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
         <Route path='/dummy-2' element={<DummyPage2 />} />
         <Route path='/dummy-3' element={<DummyPage3 />} />
         <Route path='/dummy-4' element={<DummyPage4 />} />
+        <Route path='/dummy-5' element={<DummyPage5 />} />
       </Routes>
     </BrowserRouter>
   )
